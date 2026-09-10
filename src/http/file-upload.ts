@@ -106,7 +106,7 @@ export class FileUpload {
    *   file name normalises to nothing usable.
    */
   static async fromPath(path: string, options: FileUploadFromPathOptions = {}): Promise<FileUpload> {
-    let isFile = false;
+    let isFile: boolean;
 
     try {
       isFile = (await stat(path)).isFile();

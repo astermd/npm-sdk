@@ -4,7 +4,38 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
+    # Peer-locked toolchains must move as a unit; a single-package bump leaves
+    # an unsatisfiable peer range and `npm ci` fails before the gate even runs.
+    groups:
+      vitest:
+        patterns:
+          - vitest
+          - '@vitest/*'
+      eslint:
+        patterns:
+          - eslint
+          - '@eslint/*'
+          - typescript-eslint
+          - eslint-config-prettier
+      build:
+        patterns:
+          - tsup
+          - publint
+          - prettier
+    ignore:
+      # @types/node tracks the lowest runtime this package supports
+      # (engines.node is >=22), not the newest release line.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # typescript majors are gated by typescript-eslint's peer range.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
