@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Internal, never published
+CLAUDE.local.md
+docs/PENDING.md
+docs/superpowers/
+.superpowers/
+.claude/settings.local.json
+
+.env
+.env.*
+*.log
+.DS_Store
