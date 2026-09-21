@@ -588,7 +588,9 @@ a debug log.
 | `list(query?: QueryParams): Promise<Response<T>>`             | GET  | `/v1/sales/treatments/list`      |
 | `sync(options: TreatmentSyncOptions): Promise<Response<T>>`   | POST | `/v1/sales/treatments/sync`      |
 
-`TreatmentSyncOptions` is `{ session, orderIds, utmSource?, userAgent? }`. Use
+`TreatmentSyncOptions` is
+`{ session, orderIds, userAgent, utmSource?, payment?, verification? }`.
+`userAgent` is required - an empty or missing value throws `TypeError`. Use
 `sync()` to push an order settled in an external CRM into AsterMD after
 settlement happens outside the SDK.
 

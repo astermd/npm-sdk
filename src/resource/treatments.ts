@@ -3,16 +3,77 @@ import type { Transport } from '../http/transport.js';
 import type { Response as ApiResponse } from '../response.js';
 import { AbstractResource } from './abstract-resource.js';
 
+/** The card network for {@link TreatmentCardOptions.type}. */
+export type TreatmentCardType = 'amex' | 'visa' | 'mastercard' | 'discover' | 'diners_club' | 'jcb';
+
+/** The settled payment method for {@link TreatmentPaymentOptions.type}. */
+export type TreatmentPaymentType = 'paypal' | 'apple_pay' | 'gpay' | 'credit_card' | 'pre_paid';
+
+/** The identity check performed for {@link TreatmentIdVerificationOptions.method}. */
+export type TreatmentIdVerificationMethod = 'ssn' | 'dob' | 'cross_check' | 'document_upload';
+
+/** Card details nested inside {@link TreatmentPaymentOptions.card}. */
+export interface TreatmentCardOptions {
+  /** The card network. */
+  type: TreatmentCardType;
+  /** The card's bank identification number, when available. */
+  bin?: string;
+  /** The card's expiry, in the format your integration agreed with AsterMD. */
+  exp: string;
+}
+
+/** The settled payment method for {@link Treatments.sync}. */
+export interface TreatmentPaymentOptions {
+  /** How the order was paid for. */
+  type: TreatmentPaymentType;
+  /** Whether the payment was a pre-authorisation rather than a capture. */
+  preAuth: boolean;
+  /** Whether the pre-authorisation was a quality-assurance hold rather than a real charge. */
+  preAuthQa?: boolean;
+  /** The pre-authorised amount, when `preAuth` is true. */
+  preAuthAmount?: number;
+  /** Card details, when the payment method is card-based. */
+  card?: TreatmentCardOptions;
+}
+
+/** The identity check nested inside {@link TreatmentVerificationOptions.id}. */
+export interface TreatmentIdVerificationOptions {
+  /** Whether the check passed. */
+  verified: boolean;
+  /** Which identity check was performed. */
+  method: TreatmentIdVerificationMethod;
+  /** The value that was checked, e.g. the SSN or date of birth submitted. */
+  value: string;
+}
+
+/** Identity/contact verification already performed by the caller, for {@link Treatments.sync}. */
+export interface TreatmentVerificationOptions {
+  /** Whether the patient's email was verified. */
+  email: boolean;
+  /** Whether the patient's address was verified. */
+  address: boolean;
+  /** The identity check performed, if any. */
+  id?: TreatmentIdVerificationOptions;
+}
+
 /** Options for {@link Treatments.sync}. */
 export interface TreatmentSyncOptions {
   /** The session the orders belong to. */
   session: string;
   /** Order identifiers from your own commerce system. */
   orderIds: string[];
+  /**
+   * The visitor's user agent, forwarded as the required `User-Agent` header.
+   * Since the SDK runs server-to-server, only the consuming application knows
+   * the real value - read it from the incoming request and pass it here.
+   */
+  userAgent: string;
   /** Campaign attribution to record alongside the orders. */
   utmSource?: string;
-  /** The visitor's user agent, forwarded as the `User-Agent` header. */
-  userAgent?: string;
+  /** The settled payment method for the order. */
+  payment?: TreatmentPaymentOptions;
+  /** Identity/contact verification already performed by the caller. */
+  verification?: TreatmentVerificationOptions;
 }
 
 /**
@@ -119,16 +180,25 @@ export class Treatments extends AbstractResource {
    * The alternative to {@link Treatments.create} for flows where checkout happens
    * outside your storefront: hand over the session and your order identifiers and
    * the server creates the treatments and attributes them to that session's
-   * journey. Several orders can be reconciled in one call.
+   * journey. Several orders can be reconciled in one call. `payment`, when
+   * supplied, carries the settled payment method for the order; `verification`,
+   * when supplied, records identity/contact verification already performed by
+   * the caller.
    *
-   * @param options The session, your order identifiers, and optional attribution.
+   * @param options The session, your order identifiers, the required user agent,
+   *   and optional attribution, payment, and verification details.
    * @returns The created treatments.
+   * @throws {TypeError} If `userAgent` is missing or empty.
    * @throws {ValidationError} If the session or an order identifier is rejected.
    * @throws {NotFoundError} If the session does not exist.
    * @throws {ApiError} On any other non-2xx status.
    * @throws {TransportError} If the request never completed.
    */
   async sync<T = Record<string, unknown>>(options: TreatmentSyncOptions): Promise<ApiResponse<T>> {
+    if (options.userAgent === undefined || options.userAgent === '') {
+      throw new TypeError('Treatments.sync requires a non-empty userAgent.');
+    }
+
     const body: Record<string, unknown> = {
       session_id: options.session,
       order_ids: options.orderIds,
@@ -138,15 +208,41 @@ export class Treatments extends AbstractResource {
       body.utm_source = options.utmSource;
     }
 
-    const headers =
-      options.userAgent !== undefined && options.userAgent !== '' ? { 'User-Agent': options.userAgent } : {};
+    if (options.payment !== undefined) {
+      const payment: Record<string, unknown> = {
+        type: options.payment.type,
+        pre_auth: options.payment.preAuth,
+      };
+
+      if (options.payment.preAuthQa !== undefined) {
+        payment.pre_auth_qa = options.payment.preAuthQa;
+      }
+
+      if (options.payment.preAuthAmount !== undefined) {
+        payment.pre_auth_amount = options.payment.preAuthAmount;
+      }
+
+      if (options.payment.card !== undefined) {
+        payment.card = options.payment.card;
+      }
+
+      body.payment = payment;
+    }
+
+    if (options.verification !== undefined) {
+      body.verification = {
+        email: options.verification.email,
+        address: options.verification.address,
+        ...(options.verification.id !== undefined ? { id: options.verification.id } : {}),
+      };
+    }
 
     return await this.transport.send<T>({
       service: 'sales',
       method: 'POST',
       path: '/treatments/sync',
       body,
-      headers,
+      headers: { 'User-Agent': options.userAgent },
     });
   }
 }
