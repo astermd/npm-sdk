@@ -1,6 +1,6 @@
 {
   "name": "@astermd-hq/sdk",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Official Node.js SDK for the AsterMD order-flow API.",
   "keywords": [
     "astermd",

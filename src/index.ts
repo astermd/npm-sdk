@@ -36,7 +36,17 @@ export type {
 } from './resource/intake-submissions.js';
 export { Patients, type SubmitHealthInformationOptions } from './resource/patients.js';
 export { Opportunities } from './resource/opportunities.js';
-export { Treatments, type TreatmentSyncOptions } from './resource/treatments.js';
+export {
+  Treatments,
+  type TreatmentSyncOptions,
+  type TreatmentPaymentOptions,
+  type TreatmentCardOptions,
+  type TreatmentCardType,
+  type TreatmentPaymentType,
+  type TreatmentVerificationOptions,
+  type TreatmentIdVerificationOptions,
+  type TreatmentIdVerificationMethod,
+} from './resource/treatments.js';
 export { Channels } from './resource/channels.js';
 export { DoctorsNetworks } from './resource/doctors-networks.js';
 export { Categories } from './resource/categories.js';

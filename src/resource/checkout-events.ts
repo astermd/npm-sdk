@@ -89,7 +89,13 @@ export class CheckoutEvents extends AbstractResource {
    * Send one call per state the visitor reaches: an upsell offered, then accepted
    * or declined, then the order placed or declined. The payload carries whatever
    * context that state needs, but it can never override `event` - the state
-   * recorded is always the one you passed explicitly.
+   * recorded is always the one you passed explicitly. For an `OrderPlaced` event,
+   * `data` may include an optional `payment` object describing the settled
+   * payment method: `type` (`paypal` | `apple_pay` | `gpay` | `credit_card` |
+   * `pre_paid`), `pre_auth` (boolean), `pre_auth_qa` and `pre_auth_amount`
+   * (optional), and an optional `card` object (`type` - `amex` | `visa` |
+   * `mastercard` | `discover` | `diners_club` | `jcb`, optional `bin`, required
+   * `exp`).
    *
    * @param options The session, the new state, and any context for it.
    * @returns The updated checkout-event record.

@@ -7,9 +7,10 @@ export interface CartWriteOptions {
   /** The session the cart belongs to. */
   session: string;
   /**
-   * The cart's full contents. Each entry identifies a product and quantity, and
-   * a variant where the product has them. This is the complete list, not a
-   * delta - see the API reference in your AsterMD dashboard for the fields.
+   * The cart's full contents. Each entry requires `product_id`, `name`, and
+   * `qty`, plus an optional `variant_id` when the product has variants. This is
+   * the complete list, not a delta - see the API reference in your AsterMD
+   * dashboard for the fields.
    */
   items: Record<string, unknown>[];
 }

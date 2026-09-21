@@ -7,7 +7,11 @@ export interface SessionCreateOptions {
   /**
    * Attribution and context to record against the session - UTM parameters,
    * referrer, landing page. Forwarded unmodified; see the API reference in your
-   * AsterMD dashboard for the recognised keys.
+   * AsterMD dashboard for the recognised keys. May include an optional
+   * `verification` object recording identity/contact verification already
+   * performed by the caller - every field inside it is optional too: `email`
+   * (boolean), `address` (boolean), and `id` (`verified` boolean, `method` -
+   * `ssn` | `dob` | `cross_check` | `document_upload`, `value` string).
    */
   data?: Record<string, unknown>;
   /** The visitor's user agent, forwarded as the `User-Agent` header. */
@@ -135,7 +139,8 @@ export class Sessions extends AbstractResource {
    *
    * @param session The session identifier to update.
    * @param data Fields to record. Forwarded unmodified; see the API reference in
-   *   your AsterMD dashboard for the recognised keys.
+   *   your AsterMD dashboard for the recognised keys. Accepts the same optional
+   *   `verification` object documented on {@link Sessions.create}.
    * @returns The updated session.
    * @throws {NotFoundError} If the session does not exist.
    * @throws {ValidationError} If the payload is rejected.
